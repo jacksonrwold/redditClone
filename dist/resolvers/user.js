@@ -91,24 +91,26 @@ let UserResolver = class UserResolver {
         catch (err) {
             if (err.code === 23505 || err.detail.includes("already exists")) {
                 return {
-                    errors: [{
+                    errors: [
+                        {
                             field: "username",
-                            message: "username already taken"
-                        }]
+                            message: "username already taken",
+                        },
+                    ],
                 };
             }
             console.error("message:", err.message);
         }
         return { user };
     }
-    async login(options, { em }) {
+    async login(options, { em, req }) {
         const user = await em.findOne(User_1.User, { username: options.username });
         if (!user) {
             return {
                 errors: [
                     {
                         field: "username",
-                        message: "that username doesn't exist"
+                        message: "that username doesn't exist",
                     },
                 ],
             };
@@ -119,11 +121,12 @@ let UserResolver = class UserResolver {
                 errors: [
                     {
                         field: "password",
-                        message: "invalid password"
+                        message: "invalid password",
                     },
                 ],
             };
         }
+        req.session.userId = user.id;
         return {
             user,
         };
