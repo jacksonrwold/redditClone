@@ -4,6 +4,7 @@ import { __prod__ } from "./constants";
 import microConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
@@ -23,7 +24,12 @@ const main = async () => {
   const redisClient = redis.createClient();
 
   app.set("trust proxy", 1);
-  app.use(cors());
+  app.use(
+    cors({
+      origin: "https://studio.apollographql.com",
+      credentials: true,
+    })
+  );
 
   app.use(
     session({
@@ -33,13 +39,13 @@ const main = async () => {
         disableTouch: true,
       }),
       cookie: {
-        maxAge: 1000 * 60 * 60 * 365 * 10, // 10 years
+        maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
-        sameSite: "lax", //csrf
+        sameSite: "lax", // csrf
         secure: __prod__, // cookie only works in https
       },
       saveUninitialized: false,
-      secret: "qwertyuiopasdfghjklmnbvcxz",
+      secret: "qowiueojwojfalksdjoqiwueo",
       resave: false,
     })
   );
@@ -53,7 +59,7 @@ const main = async () => {
   });
 
   await apolloServer.start();
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({ app, cors: false });
 
   app.listen(4000, () => {
     console.log("server started on localhost:4000");
