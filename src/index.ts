@@ -11,6 +11,7 @@ import { UserResolver } from "./resolvers/user";
 import redis from "redis";
 import session from "express-session";
 import cors from "cors";
+import { sendEmail } from "./utils/sendEmail";
 
 let RedisStore = require("connect-redis")(session);
 
