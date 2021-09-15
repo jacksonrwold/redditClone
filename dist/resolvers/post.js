@@ -11,6 +11,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostResolver = void 0;
 const Post_1 = require("../entities/Post");
@@ -31,41 +40,59 @@ PostInput = __decorate([
     type_graphql_1.InputType()
 ], PostInput);
 let PostResolver = class PostResolver {
-    async posts(limit, cursor) {
-        const realLimit = Math.min(50, limit);
-        const qb = typeorm_1.getConnection()
-            .getRepository(Post_1.Post)
-            .createQueryBuilder("p")
-            .orderBy('"createdAt"', "DESC")
-            .take(realLimit);
-        if (cursor) {
-            qb.where('"createdAt" < :cursor', {
-                cursor: new Date(parseInt(cursor)),
-            });
-        }
-        return qb.getMany();
+    textSnippit(root) {
+        return root.text.slice(0, 50);
+    }
+    posts(limit, cursor) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const realLimit = Math.min(50, limit);
+            const qb = typeorm_1.getConnection()
+                .getRepository(Post_1.Post)
+                .createQueryBuilder("p")
+                .orderBy('"createdAt"', "DESC")
+                .take(realLimit);
+            if (cursor) {
+                qb.where('"createdAt" < :cursor', {
+                    cursor: new Date(parseInt(cursor)),
+                });
+            }
+            return qb.getMany();
+        });
     }
     post(id) {
         return Post_1.Post.findOne(id);
     }
-    async createPost(input, { req }) {
-        return Post_1.Post.create(Object.assign(Object.assign({}, input), { creatorId: req.session.userId })).save();
+    createPost(input, { req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return Post_1.Post.create(Object.assign(Object.assign({}, input), { creatorId: req.session.userId })).save();
+        });
     }
-    async updatePost(id, title) {
-        const post = await Post_1.Post.findOne(id);
-        if (!post) {
-            return null;
-        }
-        if (typeof title !== undefined) {
-            Post_1.Post.update({ id }, { title });
-        }
-        return post;
+    updatePost(id, title) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const post = yield Post_1.Post.findOne(id);
+            if (!post) {
+                return null;
+            }
+            if (typeof title !== undefined) {
+                Post_1.Post.update({ id }, { title });
+            }
+            return post;
+        });
     }
-    async deletePost(id) {
-        await Post_1.Post.delete(id);
-        return true;
+    deletePost(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield Post_1.Post.delete(id);
+            return true;
+        });
     }
 };
+__decorate([
+    type_graphql_1.FieldResolver(() => String),
+    __param(0, type_graphql_1.Root()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Post_1.Post]),
+    __metadata("design:returntype", void 0)
+], PostResolver.prototype, "textSnippit", null);
 __decorate([
     type_graphql_1.Query(() => [Post_1.Post]),
     __param(0, type_graphql_1.Arg("limit", () => type_graphql_1.Int)),
@@ -106,7 +133,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "deletePost", null);
 PostResolver = __decorate([
-    type_graphql_1.Resolver()
+    type_graphql_1.Resolver(Post_1.Post)
 ], PostResolver);
 exports.PostResolver = PostResolver;
 //# sourceMappingURL=post.js.map
