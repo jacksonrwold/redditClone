@@ -22,8 +22,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostResolver = void 0;
-const Post_1 = require("../entities/Post");
 const type_graphql_1 = require("type-graphql");
+const Post_1 = require("../entities/Post");
 const isAuth_1 = require("../middleware/isAuth");
 const typeorm_1 = require("typeorm");
 let PostInput = class PostInput {
@@ -39,24 +39,42 @@ __decorate([
 PostInput = __decorate([
     type_graphql_1.InputType()
 ], PostInput);
+let PaginatedPosts = class PaginatedPosts {
+};
+__decorate([
+    type_graphql_1.Field(() => [Post_1.Post]),
+    __metadata("design:type", Array)
+], PaginatedPosts.prototype, "posts", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Boolean)
+], PaginatedPosts.prototype, "hasMore", void 0);
+PaginatedPosts = __decorate([
+    type_graphql_1.ObjectType()
+], PaginatedPosts);
 let PostResolver = class PostResolver {
-    textSnippit(root) {
-        return root.text.slice(0, 50);
+    textSnippet(post) {
+        return post.text.slice(0, 50);
     }
     posts(limit, cursor) {
         return __awaiter(this, void 0, void 0, function* () {
             const realLimit = Math.min(50, limit);
+            const reaLimitPlusOne = realLimit + 1;
             const qb = typeorm_1.getConnection()
                 .getRepository(Post_1.Post)
                 .createQueryBuilder("p")
                 .orderBy('"createdAt"', "DESC")
-                .take(realLimit);
+                .take(reaLimitPlusOne);
             if (cursor) {
                 qb.where('"createdAt" < :cursor', {
                     cursor: new Date(parseInt(cursor)),
                 });
             }
-            return qb.getMany();
+            const posts = yield qb.getMany();
+            return {
+                posts: posts.slice(0, realLimit),
+                hasMore: posts.length === reaLimitPlusOne,
+            };
         });
     }
     post(id) {
@@ -73,8 +91,8 @@ let PostResolver = class PostResolver {
             if (!post) {
                 return null;
             }
-            if (typeof title !== undefined) {
-                Post_1.Post.update({ id }, { title });
+            if (typeof title !== "undefined") {
+                yield Post_1.Post.update({ id }, { title });
             }
             return post;
         });
@@ -92,9 +110,9 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Post_1.Post]),
     __metadata("design:returntype", void 0)
-], PostResolver.prototype, "textSnippit", null);
+], PostResolver.prototype, "textSnippet", null);
 __decorate([
-    type_graphql_1.Query(() => [Post_1.Post]),
+    type_graphql_1.Query(() => PaginatedPosts),
     __param(0, type_graphql_1.Arg("limit", () => type_graphql_1.Int)),
     __param(1, type_graphql_1.Arg("cursor", () => String, { nullable: true })),
     __metadata("design:type", Function),
@@ -120,7 +138,7 @@ __decorate([
 __decorate([
     type_graphql_1.Mutation(() => Post_1.Post, { nullable: true }),
     __param(0, type_graphql_1.Arg("id")),
-    __param(1, type_graphql_1.Arg("title")),
+    __param(1, type_graphql_1.Arg("title", () => String, { nullable: true })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number, String]),
     __metadata("design:returntype", Promise)
