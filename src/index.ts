@@ -13,10 +13,9 @@ import cors from "cors";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
-import { Updoot } from "./entities/Updoot";
 import path from "path";
+import { Updoot } from "./entities/Updoot";
 
-// rerun
 const main = async () => {
   const conn = await createConnection({
     type: "postgres",
@@ -28,13 +27,12 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot],
   });
-
   await conn.runMigrations();
 
   // await Post.delete({});
 
   const app = express();
-  //@ts-ignore
+
   const RedisStore = connectRedis(session);
   const redis = new Redis();
   app.use(
@@ -46,8 +44,8 @@ const main = async () => {
   app.use(
     session({
       name: COOKIE_NAME,
-      //@ts-ignore
       store: new RedisStore({
+        //@ts-ignore
         client: redis,
         disableTouch: true,
       }),

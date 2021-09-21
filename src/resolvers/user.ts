@@ -40,11 +40,11 @@ class UserResponse {
 export class UserResolver {
   @FieldResolver(() => String)
   email(@Root() user: User, @Ctx() { req }: MyContext) {
-    // checks who the current user is, and will show current user their own email
+    // this is the current user and its ok to show them their own email
     if (req.session.userId === user.id) {
       return user.email;
     }
-    // makes it so you can't see someone else's email
+    // current user wants to see someone elses email
     return "";
   }
 
@@ -67,7 +67,6 @@ export class UserResolver {
 
     const key = FORGET_PASSWORD_PREFIX + token;
     const userId = await redis.get(key);
-
     if (!userId) {
       return {
         errors: [
@@ -102,7 +101,7 @@ export class UserResolver {
 
     await redis.del(key);
 
-    //login user after password change
+    // log in user after change password
     req.session.userId = user.id;
 
     return { user };
@@ -138,6 +137,7 @@ export class UserResolver {
 
   @Query(() => User, { nullable: true })
   me(@Ctx() { req }: MyContext) {
+    // you are not logged in
     if (!req.session.userId) {
       return null;
     }
@@ -158,7 +158,7 @@ export class UserResolver {
     const hashedPassword = await argon2.hash(options.password);
     let user;
     try {
-      // this is equivelant to = User.create({username: stuff, email: stuff, password: stuff}).save()
+      // User.create({}).save()
       const result = await getConnection()
         .createQueryBuilder()
         .insert()
@@ -172,8 +172,9 @@ export class UserResolver {
         .execute();
       user = result.raw[0];
     } catch (err) {
+      //|| err.detail.includes("already exists")) {
       // duplicate username error
-      if (err.code === 23505 || err.detail.includes("already exists")) {
+      if (err.code === "23505") {
         return {
           errors: [
             {
@@ -183,11 +184,11 @@ export class UserResolver {
           ],
         };
       }
-      console.error("message:", err.message);
     }
 
     // store user id session
-    // will create a cookie for the user when the user is created, effectively logging the user in
+    // this will set a cookie on the user
+    // keep them logged in
     req.session.userId = user.id;
 
     return { user };
@@ -220,13 +221,13 @@ export class UserResolver {
         errors: [
           {
             field: "password",
-            message: "invalid password",
+            message: "incorrect password",
           },
         ],
       };
     }
 
-    req.session!.userId = user.id;
+    req.session.userId = user.id;
 
     return {
       user,
@@ -236,6 +237,7 @@ export class UserResolver {
   @Mutation(() => Boolean)
   logout(@Ctx() { req, res }: MyContext) {
     return new Promise((resolve) =>
+      //@ts-ignore
       req.session.destroy((err) => {
         res.clearCookie(COOKIE_NAME);
         if (err) {

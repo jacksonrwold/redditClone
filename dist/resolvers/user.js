@@ -152,7 +152,7 @@ let UserResolver = class UserResolver {
                 user = result.raw[0];
             }
             catch (err) {
-                if (err.code === 23505 || err.detail.includes("already exists")) {
+                if (err.code === "23505") {
                     return {
                         errors: [
                             {
@@ -162,7 +162,6 @@ let UserResolver = class UserResolver {
                         ],
                     };
                 }
-                console.error("message:", err.message);
             }
             req.session.userId = user.id;
             return { user };
@@ -189,7 +188,7 @@ let UserResolver = class UserResolver {
                     errors: [
                         {
                             field: "password",
-                            message: "invalid password",
+                            message: "incorrect password",
                         },
                     ],
                 };
@@ -214,8 +213,7 @@ let UserResolver = class UserResolver {
 };
 __decorate([
     type_graphql_1.FieldResolver(() => String),
-    __param(0, type_graphql_1.Root()),
-    __param(1, type_graphql_1.Ctx()),
+    __param(0, type_graphql_1.Root()), __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [User_1.User, Object]),
     __metadata("design:returntype", void 0)
